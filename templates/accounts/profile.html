@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Профиль — ЛитВечер{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <h2 style="margin-bottom:8px;">{{ user.get_full_name|default:user.username }}</h2>
+  <p style="color:var(--text2);margin-bottom:24px;">{{ user.email }}</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group"><label>О себе</label>{{ form.bio }}</div>
+    <div class="form-group"><label>Любимый жанр</label>{{ form.favorite_genre }}</div>
+    <div class="form-group"><label>Аватар</label>{{ form.avatar }}</div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+  </form>
+</div>
+{% endblock %}

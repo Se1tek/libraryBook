@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Регистрация — ЛитВечер{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <h2 style="margin-bottom:24px;text-align:center;">Создать аккаунт</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="form-group"><label>Имя</label>{{ form.first_name }}</div>
+      <div class="form-group"><label>Фамилия</label>{{ form.last_name }}</div>
+    </div>
+    <div class="form-group"><label>Логин</label>{{ form.username }}</div>
+    <div class="form-group"><label>Email</label>{{ form.email }}</div>
+    <div class="form-group"><label>Пароль</label>{{ form.password1 }}</div>
+    <div class="form-group"><label>Повторите пароль</label>{{ form.password2 }}</div>
+    {% if form.errors %}
+    <div class="alert alert-error">
+      {% for field in form %}{% for err in field.errors %}<p>{{ err }}</p>{% endfor %}{% endfor %}
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+  </form>
+  <p style="text-align:center;margin-top:16px;color:var(--text2);">Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }} — ЛитВечер{% endblock %}
+
+{% block content %}
+<div class="event-detail">
+  <div class="two-col">
+    <div>
+      {% if event.cover_image %}
+        <img src="{{ event.cover_image.url }}" alt="{{ event.title }}" class="event-cover">
+      {% else %}
+        <div class="event-cover-placeholder">📖</div>
+      {% endif %}
+
+      <h1 class="event-title">{{ event.title }}</h1>
+
+      <div class="event-meta">
+        <span>📅 {{ event.date|date:"d M Y, H:i" }}</span>
+        <span>⏱ {{ event.duration_minutes }} мин</span>
+        {% if event.category %}<span>🏷 {{ event.category.name }}</span>{% endif %}
+        <span class="badge badge-{{ event.format }}">{{ event.get_format_display }}</span>
+      </div>
+
+      {% if event.book_title %}
+      <div style="background:var(--bg3);padding:16px;border-radius:var(--radius);margin-bottom:20px;">
+        <div style="color:var(--text2);font-size:0.85rem;margin-bottom:4px;">Книга для обсуждения</div>
+        <div style="font-size:1.1rem;font-weight:bold;">{{ event.book_title }}</div>
+        {% if event.book_author %}<div style="color:var(--text2);">{{ event.book_author }}</div>{% endif %}
+      </div>
+      {% endif %}
+
+      <div style="line-height:1.8;color:var(--text2);">{{ event.description|linebreaks }}</div>
+
+      <hr class="divider">
+
+      <!-- COMMENTS -->
+      <div class="comments-section">
+        <h3 style="margin-bottom:20px;">Обсуждение ({{ event.comments.count }})</h3>
+
+        <div id="comments-list">
+        {% for comment in comments %}
+        <div class="comment" id="comment-{{ comment.id }}">
+          <div class="comment-header">
+            <span class="comment-user">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+            <span>{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+          </div>
+          <div>{{ comment.text }}</div>
+          {% if user.is_authenticated %}
+          <button class="reply-btn">↩ Ответить</button>
+          {% endif %}
+
+          {% if comment.replies.all %}
+          <div class="replies">
+          {% for reply in comment.replies.all %}
+            <div class="comment-reply" id="comment-{{ reply.id }}">
+              <div class="comment-header">
+                <span class="comment-user">{{ reply.user.get_full_name|default:reply.user.username }}</span>
+                <span>{{ reply.created_at|date:"d.m.Y H:i" }}</span>
+              </div>
+              <div>{{ reply.text }}</div>
+            </div>
+          {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if user.is_authenticated %}
+          <div class="reply-form">
+            <form data-event="{{ event.pk }}" data-parent="{{ comment.id }}">
+              {% csrf_token %}
+              <textarea class="form-control" rows="2" placeholder="Ответить..."></textarea>
+              <button type="submit" class="btn btn-sm btn-outline reply-submit" style="margin-top:8px;">Отправить</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p style="color:var(--text2);">Комментариев пока нет. Будьте первым!</p>
+        {% endfor %}
+        </div>
+
+        {% if user.is_authenticated %}
+        <div style="margin-top:24px;">
+          <h4 style="margin-bottom:12px;">Добавить комментарий</h4>
+          <form id="main-comment-form" data-event="{{ event.pk }}">
+            {% csrf_token %}
+            <textarea class="form-control" rows="3" placeholder="Ваши мысли о книге или мероприятии..."></textarea>
+            <button type="submit" class="btn btn-primary" style="margin-top:12px;">Отправить</button>
+          </form>
+        </div>
+        {% else %}
+        <p style="color:var(--text2);margin-top:20px;"><a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="sticky-card">
+        <div style="margin-bottom:16px;">
+          <div style="color:var(--text2);font-size:0.85rem;margin-bottom:4px;">Организатор</div>
+          <div>{{ event.author.get_full_name|default:event.author.username }}</div>
+        </div>
+        <hr class="divider">
+        <div style="margin-bottom:16px;">
+          <div style="color:var(--text2);font-size:0.85rem;margin-bottom:4px;">Участники</div>
+          <div style="font-size:1.2rem;"><span id="participant-count">{{ event.participants_count }}</span> / <span id="max-participants">{{ event.max_participants }}</span></div>
+          <div class="progress-bar-wrap">
+            <div id="progress-bar" class="progress-bar" style="width:{% widthratio event.participants_count event.max_participants 100 %}%"></div>
+          </div>
+          {% if event.is_full %}<span class="badge badge-full">Мест нет</span>{% endif %}
+        </div>
+        <hr class="divider">
+
+        {% if event.is_upcoming %}
+          {% if user.is_authenticated %}
+            {% if is_registered %}
+              <button id="unreg-btn" data-event="{{ event.pk }}" class="btn btn-danger btn-block">Отменить участие</button>
+              {% if event.stream_link %}
+              <a href="{{ event.stream_link }}" target="_blank" class="btn btn-primary btn-block" style="margin-top:12px;">🎥 Перейти к трансляции</a>
+              {% endif %}
+            {% else %}
+              <button id="reg-btn" data-event="{{ event.pk }}" class="btn btn-primary btn-block" {% if event.is_full %}disabled{% endif %}>
+                {% if event.is_full %}Мест нет{% else %}Зарегистрироваться{% endif %}
+              </button>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary btn-block">Войти для регистрации</a>
+          {% endif %}
+        {% else %}
+          <div style="color:var(--text2);text-align:center;">Мероприятие завершено</div>
+        {% endif %}
+
+        {% if user == event.author %}
+        <hr class="divider">
+        <a href="{% url 'event_edit' event.pk %}" class="btn btn-outline btn-block">✏️ Редактировать</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

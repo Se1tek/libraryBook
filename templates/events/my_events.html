@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Мои события — ЛитВечер{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>📋 Мои события</h1>
+</div>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" data-tab="organized">Организовал ({{ organized.count }})</div>
+    <div class="tab" data-tab="registered">Записан ({{ registered.count }})</div>
+  </div>
+
+  <div id="tab-organized">
+    {% if organized %}
+    <div class="cards-grid">
+      {% for event in organized %}
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title"><a href="{% url 'event_detail' event.pk %}">{{ event.title }}</a></div>
+          <div class="card-meta">📅 {{ event.date|date:"d M Y, H:i" }}</div>
+          <div class="card-meta">👥 {{ event.participants_count }} участников</div>
+        </div>
+        <div class="card-footer">
+          <a href="{% url 'event_edit' event.pk %}" class="btn btn-sm btn-outline">Редактировать</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Вы ещё не организовывали мероприятий</p>
+      <a href="{% url 'event_create' %}" class="btn btn-primary" style="margin-top:16px;">Создать первый вечер</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div id="tab-registered" style="display:none;">
+    {% if registered %}
+    <div class="cards-grid">
+      {% for event in registered %}
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title"><a href="{% url 'event_detail' event.pk %}">{{ event.title }}</a></div>
+          <div class="card-meta">📅 {{ event.date|date:"d M Y, H:i" }}</div>
+          {% if event.is_upcoming %}<span class="badge badge-online">Предстоит</span>{% else %}<span style="color:var(--text2);">Прошло</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Вы не записаны ни на одно мероприятие</p>
+      <a href="{% url 'event_list' %}" class="btn btn-primary" style="margin-top:16px;">Смотреть мероприятия</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-organized').style.display = 'none';
+    document.getElementById('tab-registered').style.display = 'none';
+    document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}
